@@ -1,6 +1,7 @@
 # todoing
 
-A new Flutter project.
+- A TODO app implementing the MVVM architecture and layer it on top of Services and Locators.
+- Single page very barebone UI experimenting with the inner working of the MVVM structure.
 
 ## Getting Started
 
