@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:uuid/uuid.dart';
-import 'package:todoing/todo/todo.dart';
+import 'package:todoing/date_service.dart';
+// import 'package:uuid/uuid.dart';
+// import 'package:todoing/todo/todo.dart';
+import 'package:todoing/todo/todo_page_view_model.dart';
+import 'package:todoing/utils/locator.dart';
 
 class TodoPage extends StatefulWidget {
   const TodoPage({super.key});
@@ -10,13 +13,11 @@ class TodoPage extends StatefulWidget {
 }
 
 class _TodoPageState extends State<TodoPage> {
+  final TodoPageViewModel _todoPageViewModel = TodoPageViewModel(
+    dateService: locator<DateService>(),
+  );
   final TextEditingController _todoController = TextEditingController();
   // final todos = <Todo>[];
-  final todos = <Todo>[
-    Todo(id: "1", title: "Test", completed: false),
-    Todo(id: "2", title: "Test 2", completed: true),
-    Todo(id: "3", title: "Test 3", completed: false),
-  ];
 
   @override
   void dispose() {
@@ -35,17 +36,7 @@ class _TodoPageState extends State<TodoPage> {
         actions: [
           TextButton(
             onPressed: () {
-              setState(() {
-                todos.add(
-                  Todo(
-                    id: const Uuid().v4(),
-                    title: _todoController.text,
-                    completed: false,
-                  ),
-                );
-                // SOLVED - add text to the list of todos
-                // SOLVED - hint: todos.add(Todo(id: const Uuid().v4(), title: 'this should be the text from the controller', completed: false));
-              });
+              _todoPageViewModel.add(_todoController.text);
               _todoController.clear();
               Navigator.pop(context);
             },
@@ -59,40 +50,64 @@ class _TodoPageState extends State<TodoPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Display time')),
-      body: ListView.builder(
-        itemCount: todos.length,
-        itemBuilder: (context, index) {
-          final todo = todos[index];
+      appBar: AppBar(
+        title: ValueListenableBuilder(
+          valueListenable: _todoPageViewModel.dateNotifier,
+          builder: (context, date, child) {
+            return Text("Time: ${date.hour}:${date.minute}:${date.second}");
+          },
+        ),
+      ),
+      body: ValueListenableBuilder(
+        valueListenable: _todoPageViewModel.todosNotifier,
+        builder: (context, todos, child) {
+          return ListView.builder(
+            itemCount: todos.length,
+            itemBuilder: (context, index) {
+              final todo = todos[index];
 
-          if (todo.completed) {
-            return const SizedBox();
-          }
+              // if (todo.completed) {
+              //   return const SizedBox();
+              // }
 
-          return ListTile(
-            title: Text(todo.title),
-            trailing: Checkbox(
-              value: todo.completed,
-              onChanged: (value) {
-                final newTodo = todo.copyWith(completed: value ?? false);
-                setState(() {
-                  todos[index] = newTodo;
-                });
-              },
-            ),
-            onLongPress: () {
-              setState(() {
-                todos.removeAt(index);
-              });
+              return ListTile(
+                title: Text(
+                  todo.title,
+                  style: todo.completed
+                      ? const TextStyle(decoration: TextDecoration.lineThrough)
+                      : null,
+                ),
+                trailing: Checkbox(
+                  value: todo.completed,
+                  onChanged: (value) {
+                    _todoPageViewModel.toggleDone(todo);
+                  },
+                ),
+                onLongPress: () {
+                  _todoPageViewModel.remove(todo);
+                },
+              );
             },
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          _addTodo();
-        },
-        child: const Icon(Icons.add),
+      floatingActionButton: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          FloatingActionButton(
+            onPressed: () {
+              _todoPageViewModel.resetDate();
+            },
+            child: const Icon(Icons.refresh_sharp),
+          ),
+          const SizedBox(width: 10),
+          FloatingActionButton(
+            onPressed: () {
+              _addTodo();
+            },
+            child: const Icon(Icons.add),
+          ),
+        ],
       ),
     );
   }
