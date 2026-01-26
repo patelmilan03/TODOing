@@ -4,6 +4,7 @@ import 'package:todoing/date_service.dart';
 // import 'package:todoing/todo/todo.dart';
 import 'package:todoing/todo/todo_page_view_model.dart';
 import 'package:todoing/utils/locator.dart';
+import 'package:todoing/utils/valuelistenablebuilder3.dart';
 
 class TodoPage extends StatefulWidget {
   const TodoPage({super.key});
@@ -49,26 +50,31 @@ class _TodoPageState extends State<TodoPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: ValueListenableBuilder(
-          valueListenable: _todoPageViewModel.dateNotifier,
-          builder: (context, date, child) {
-            return Text("Time: ${date.hour}:${date.minute}:${date.second}");
-          },
-        ),
-      ),
-      body: ValueListenableBuilder(
-        valueListenable: _todoPageViewModel.todosNotifier,
-        builder: (context, todos, child) {
-          return ListView.builder(
+    return ValueListenableBuilder3(
+      first: _todoPageViewModel.showCompletedTodosNotifier,
+      second: _todoPageViewModel.dateNotifier,
+      third: _todoPageViewModel.todosNotifier,
+      builder: (context, showCompletedTodos, date, todos, child) {
+        return Scaffold(
+          appBar: AppBar(
+            title: Text("Time: ${date.hour}:${date.minute}:${date.second}"),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  _todoPageViewModel.toggleShowCompletedTodos();
+                },
+                child: Text(showCompletedTodos ? "Hide Done" : "Show Done"),
+              ),
+            ],
+          ),
+          body: ListView.builder(
             itemCount: todos.length,
             itemBuilder: (context, index) {
               final todo = todos[index];
 
-              // if (todo.completed) {
-              //   return const SizedBox();
-              // }
+              if (!showCompletedTodos && todo.completed) {
+                return const SizedBox();
+              }
 
               return ListTile(
                 title: Text(
@@ -88,27 +94,27 @@ class _TodoPageState extends State<TodoPage> {
                 },
               );
             },
-          );
-        },
-      ),
-      floatingActionButton: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          FloatingActionButton(
-            onPressed: () {
-              _todoPageViewModel.resetDate();
-            },
-            child: const Icon(Icons.refresh_sharp),
           ),
-          const SizedBox(width: 10),
-          FloatingActionButton(
-            onPressed: () {
-              _addTodo();
-            },
-            child: const Icon(Icons.add),
+          floatingActionButton: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              FloatingActionButton(
+                onPressed: () {
+                  _todoPageViewModel.resetDate();
+                },
+                child: const Icon(Icons.refresh_sharp),
+              ),
+              const SizedBox(width: 10),
+              FloatingActionButton(
+                onPressed: () {
+                  _addTodo();
+                },
+                child: const Icon(Icons.add),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

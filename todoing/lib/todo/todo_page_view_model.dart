@@ -13,6 +13,7 @@ class TodoPageViewModel {
   ValueNotifier<DateTime> get dateNotifier => _dateService.dateNotifier;
 
   final ValueNotifier<List<Todo>> todosNotifier = ValueNotifier([]);
+  final ValueNotifier<bool> showCompletedTodosNotifier = ValueNotifier(false);
 
   void add(String title) {
     todosNotifier.value = [
@@ -31,6 +32,10 @@ class TodoPageViewModel {
     todosNotifier.value = todosNotifier.value
         .map((t) => t.id == todo.id ? t.copyWith(completed: !t.completed) : t)
         .toList();
+  }
+
+  void toggleShowCompletedTodos() {
+    showCompletedTodosNotifier.value = !showCompletedTodosNotifier.value;
   }
 
   void resetDate() {
